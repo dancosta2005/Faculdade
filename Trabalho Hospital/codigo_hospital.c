@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h> // Adicionado para garantir que printf e scanf funcionem
+#include <stdio.h>
+#include <locale.h>
 
 #define MAX_MEDICOS 20
 #define MAX_PACIENTES 50
@@ -32,8 +33,9 @@ typedef struct {
 } Consulta;
 
 // Declarações de protótipo das funções
-Medico* pesquisarMedico(int id); // Protótipo adicionado
-Paciente* pesquisarPaciente(int id); // Protótipo adicionado
+Medico* pesquisarMedico(int id);
+Paciente* pesquisarPaciente(int id);
+int verificarConflitoHorario(int idMedico, int idPaciente, const char* horario, const char* data);
 
 // Variáveis globais para armazenar os registros
 Medico medicos[MAX_MEDICOS];
@@ -58,6 +60,23 @@ void exibirPaciente(Paciente p) {
 void exibirConsulta(Consulta c) {
     printf("Número: %d, Médico ID: %d, Paciente ID: %d, Horário: %s, Duração: %d minutos, Data: %s\n", 
             c.numero, c.idMedico, c.idPaciente, c.horario, c.duracao, c.data);
+}
+
+// Função para verificar conflitos de horário
+int verificarConflitoHorario(int idMedico, int idPaciente, const char* horario, const char* data) {
+    for (int i = 0; i < numConsultas; i++) {
+        if (strcmp(consultas[i].data, data) == 0 && strcmp(consultas[i].horario, horario) == 0) {
+            if (consultas[i].idMedico == idMedico) {
+                printf("Erro: O médico já possui uma consulta marcada neste horário.\n");
+                return 1; // Conflito encontrado
+            }
+            if (consultas[i].idPaciente == idPaciente) {
+                printf("Erro: O paciente já possui uma consulta marcada neste horário.\n");
+                return 1; // Conflito encontrado
+            }
+        }
+    }
+    return 0; // Sem conflitos
 }
 
 // Funções de cadastro
@@ -173,6 +192,12 @@ void cadastrarConsulta() {
     printf("Digite a data da consulta: ");
     fgets(c.data, 20, stdin);
     c.data[strcspn(c.data, "\n")] = 0;
+
+    // Verifica conflitos de horário
+    if (verificarConflitoHorario(c.idMedico, c.idPaciente, c.horario, c.data)) {
+        printf("Erro: Conflito de horário detectado.\n");
+        return;
+    }
 
     consultas[numConsultas++] = c;
     printf("Consulta cadastrada com sucesso!\n");
@@ -327,6 +352,12 @@ void alterarConsulta() {
         if (strlen(input) > 1) {
             strcpy(c->data, input);
             c->data[strcspn(c->data, "\n")] = 0;
+        }
+
+        // Verifica conflitos de horário após alteração
+        if (verificarConflitoHorario(c->idMedico, c->idPaciente, c->horario, c->data)) {
+            printf("Erro: Conflito de horário detectado após alteração.\n");
+            return;
         }
 
         printf("Dados da consulta alterados com sucesso!\n");
@@ -501,7 +532,10 @@ void listarTodasConsultas() {
 
 // Função principal
 int main() {
+    setlocale(LC_ALL, "pt_BR.UTF-8"); // Configura a localização
+
     int opcao;
+
     do {
         printf("\n1 – Consulta\n");
         printf("2 – Paciente\n");
