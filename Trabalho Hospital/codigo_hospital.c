@@ -1,5 +1,6 @@
-#include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h> // Adicionado para garantir que printf e scanf funcionem
 
 #define MAX_MEDICOS 20
 #define MAX_PACIENTES 50
@@ -29,6 +30,10 @@ typedef struct {
     int duracao; // duração em minutos
     char data[20];
 } Consulta;
+
+// Declarações de protótipo das funções
+Medico* pesquisarMedico(int id); // Protótipo adicionado
+Paciente* pesquisarPaciente(int id); // Protótipo adicionado
 
 // Variáveis globais para armazenar os registros
 Medico medicos[MAX_MEDICOS];
@@ -144,8 +149,20 @@ void cadastrarConsulta() {
 
     printf("Digite o ID do médico: ");
     scanf("%d", &c.idMedico);
+    // Verifica se o médico existe
+    if (pesquisarMedico(c.idMedico) == NULL) {
+        printf("Erro: Médico não encontrado.\n");
+        return;
+    }
+
     printf("Digite o ID do paciente: ");
     scanf("%d", &c.idPaciente);
+    // Verifica se o paciente existe
+    if (pesquisarPaciente(c.idPaciente) == NULL) {
+        printf("Erro: Paciente não encontrado.\n");
+        return;
+    }
+
     getchar(); // Limpa o buffer
     printf("Digite o horário da consulta: ");
     fgets(c.horario, 20, stdin);
@@ -250,15 +267,68 @@ void alterarConsulta() {
         printf("Consulta encontrada! Dados atuais:\n");
         exibirConsulta(*c);
         getchar(); // Limpa o buffer
-        printf("Digite o novo horário da consulta: ");
-        fgets(c->horario, 20, stdin);
-        c->horario[strcspn(c->horario, "\n")] = 0;
-        printf("Digite a nova duração (em minutos): ");
-        scanf("%d", &c->duracao);
-        getchar(); // Limpa o buffer
-        printf("Digite a nova data da consulta: ");
-        fgets(c->data, 20, stdin);
-        c->data[strcspn(c->data, "\n")] = 0;
+
+        // Alterar número da consulta
+        printf("Digite o novo número da consulta (ou pressione Enter para manter o atual): ");
+        char input[20];
+        fgets(input, 20, stdin);
+        if (strlen(input) > 1) { // Se o usuário digitou algo
+            int novoNumero = atoi(input);
+            // Verifica se o novo número já existe
+            if (pesquisarConsulta(novoNumero) != NULL) {
+                printf("Erro: Número de consulta já existe.\n");
+                return;
+            }
+            c->numero = novoNumero;
+        }
+
+        // Alterar ID do médico
+        printf("Digite o novo ID do médico (ou pressione Enter para manter o atual): ");
+        fgets(input, 20, stdin);
+        if (strlen(input) > 1) {
+            int novoIdMedico = atoi(input);
+            if (pesquisarMedico(novoIdMedico) == NULL) {
+                printf("Erro: Médico não encontrado.\n");
+                return;
+            }
+            c->idMedico = novoIdMedico;
+        }
+
+        // Alterar ID do paciente
+        printf("Digite o novo ID do paciente (ou pressione Enter para manter o atual): ");
+        fgets(input, 20, stdin);
+        if (strlen(input) > 1) {
+            int novoIdPaciente = atoi(input);
+            if (pesquisarPaciente(novoIdPaciente) == NULL) {
+                printf("Erro: Paciente não encontrado.\n");
+                return;
+            }
+            c->idPaciente = novoIdPaciente;
+        }
+
+        // Alterar horário
+        printf("Digite o novo horário da consulta (ou pressione Enter para manter o atual): ");
+        fgets(input, 20, stdin);
+        if (strlen(input) > 1) {
+            strcpy(c->horario, input);
+            c->horario[strcspn(c->horario, "\n")] = 0;
+        }
+
+        // Alterar duração
+        printf("Digite a nova duração (em minutos) (ou pressione Enter para manter a atual): ");
+        fgets(input, 20, stdin);
+        if (strlen(input) > 1) {
+            c->duracao = atoi(input);
+        }
+
+        // Alterar data
+        printf("Digite a nova data da consulta (ou pressione Enter para manter a atual): ");
+        fgets(input, 20, stdin);
+        if (strlen(input) > 1) {
+            strcpy(c->data, input);
+            c->data[strcspn(c->data, "\n")] = 0;
+        }
+
         printf("Dados da consulta alterados com sucesso!\n");
     } else {
         printf("Consulta não encontrada!\n");
