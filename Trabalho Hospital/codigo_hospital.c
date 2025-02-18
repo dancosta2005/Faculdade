@@ -35,7 +35,9 @@ typedef struct {
 // Declarações de protótipo das funções
 Medico* pesquisarMedico(int id);
 Paciente* pesquisarPaciente(int id);
-int verificarConflitoHorario(int idMedico, int idPaciente, const char* horario, const char* data);
+int verificarConflitoHorario(int idMedico, int idPaciente, const char* horario, const char* data, int numeroConsulta);
+void alterarPaciente();
+void alterarMedico();
 
 // Variáveis globais para armazenar os registros
 Medico medicos[MAX_MEDICOS];
@@ -63,15 +65,19 @@ void exibirConsulta(Consulta c) {
 }
 
 // Função para verificar conflitos de horário
-int verificarConflitoHorario(int idMedico, int idPaciente, const char* horario, const char* data) {
+int verificarConflitoHorario(int idMedico, int idPaciente, const char* horario, const char* data, int numeroConsulta) {
     for (int i = 0; i < numConsultas; i++) {
+        // Ignora a consulta que está sendo alterada
+        if (consultas[i].numero == numeroConsulta) {
+            continue;
+        }
         if (strcmp(consultas[i].data, data) == 0 && strcmp(consultas[i].horario, horario) == 0) {
             if (consultas[i].idMedico == idMedico) {
-                printf("Erro: O médico já possui uma consulta marcada neste horário.\n");
+                printf("Erro: O médico já possui uma consulta marcada neste horário e data.\n");
                 return 1; // Conflito encontrado
             }
             if (consultas[i].idPaciente == idPaciente) {
-                printf("Erro: O paciente já possui uma consulta marcada neste horário.\n");
+                printf("Erro: O paciente já possui uma consulta marcada neste horário e data.\n");
                 return 1; // Conflito encontrado
             }
         }
@@ -193,9 +199,9 @@ void cadastrarConsulta() {
     fgets(c.data, 20, stdin);
     c.data[strcspn(c.data, "\n")] = 0;
 
-    // Verifica conflitos de horário
-    if (verificarConflitoHorario(c.idMedico, c.idPaciente, c.horario, c.data)) {
-        printf("Erro: Conflito de horário detectado.\n");
+    // Verifica conflitos de horário e data
+    if (verificarConflitoHorario(c.idMedico, c.idPaciente, c.horario, c.data, -1)) {
+        printf("Erro: Conflito de horário e data detectado.\n");
         return;
     }
 
@@ -232,27 +238,6 @@ Consulta* pesquisarConsulta(int numero) {
 }
 
 // Funções de alteração
-void alterarMedico() {
-    int id;
-    printf("Digite o ID do médico a ser alterado: ");
-    scanf("%d", &id);
-    Medico* m = pesquisarMedico(id);
-    if (m != NULL) {
-        printf("Médico encontrado! Dados atuais:\n");
-        exibirMedico(*m);
-        getchar(); // Limpa o buffer
-        printf("Digite o novo nome do médico: ");
-        fgets(m->nome, 100, stdin);
-        m->nome[strcspn(m->nome, "\n")] = 0;
-        printf("Digite a nova especialidade: ");
-        fgets(m->especialidade, 50, stdin);
-        m->especialidade[strcspn(m->especialidade, "\n")] = 0;
-        printf("Dados do médico alterados com sucesso!\n");
-    } else {
-        printf("Médico não encontrado!\n");
-    }
-}
-
 void alterarPaciente() {
     int id;
     printf("Digite o ID do paciente a ser alterado: ");
@@ -280,6 +265,27 @@ void alterarPaciente() {
         printf("Dados do paciente alterados com sucesso!\n");
     } else {
         printf("Paciente não encontrado!\n");
+    }
+}
+
+void alterarMedico() {
+    int id;
+    printf("Digite o ID do médico a ser alterado: ");
+    scanf("%d", &id);
+    Medico* m = pesquisarMedico(id);
+    if (m != NULL) {
+        printf("Médico encontrado! Dados atuais:\n");
+        exibirMedico(*m);
+        getchar(); // Limpa o buffer
+        printf("Digite o novo nome do médico: ");
+        fgets(m->nome, 100, stdin);
+        m->nome[strcspn(m->nome, "\n")] = 0;
+        printf("Digite a nova especialidade: ");
+        fgets(m->especialidade, 50, stdin);
+        m->especialidade[strcspn(m->especialidade, "\n")] = 0;
+        printf("Dados do médico alterados com sucesso!\n");
+    } else {
+        printf("Médico não encontrado!\n");
     }
 }
 
@@ -354,9 +360,9 @@ void alterarConsulta() {
             c->data[strcspn(c->data, "\n")] = 0;
         }
 
-        // Verifica conflitos de horário após alteração
-        if (verificarConflitoHorario(c->idMedico, c->idPaciente, c->horario, c->data)) {
-            printf("Erro: Conflito de horário detectado após alteração.\n");
+        // Verifica conflitos de horário e data após alteração
+        if (verificarConflitoHorario(c->idMedico, c->idPaciente, c->horario, c->data, c->numero)) {
+            printf("Erro: Conflito de horário e data detectado após alteração.\n");
             return;
         }
 
@@ -626,4 +632,3 @@ int main() {
 
     return 0;
 }
-
